@@ -8,7 +8,7 @@
 
 typedef struct {
 	const char *name;
-	void (*func)(int, char **);
+	int (*func)(int, char **);
 } command;
 
 static const command table[] = {
@@ -37,8 +37,7 @@ int main(int argc, char **argv) {
 	char *subcommand = argv[1];
 	for (uint32_t i = 0; i < sizeof(table) / sizeof(command); i++) {
 		if (strcmp(subcommand, table[i].name) == 0) {
-			table[i].func(argc - 2, argv + 2);
-			return EXIT_SUCCESS;
+			return table[i].func(argc - 2, argv + 2);
 		}
 	}
 
