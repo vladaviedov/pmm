@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <string.h>
+#include <fcntl.h>
 #include <unistd.h>
+
+#include "defines.h"
 
 #define CACHE_GROW 5
 
@@ -17,7 +19,7 @@
 #define locate_page(page) (sizeof(db_meta) + page * PAGE_SIZE)
 
 int flush_cache(db_cache *cache, int fd, uint32_t offset);
-db_page *load_to_cache(db_cache *cache, int fd, uint32_t page_num);
+db_page *load_to_cache(db_cache *cache, int fd, page_t page_num);
 db_page *cache_insert(db_cache *cache, db_page *data);
 
 db_table *table_open(const char *file, uint32_t table_ver) {
@@ -37,6 +39,7 @@ db_table *table_open(const char *file, uint32_t table_ver) {
 		t->fmeta.table_version = table_ver;
 		t->fmeta.total_pages = 0;
 		t->fmeta.ext_start = 0;
+		t->fmeta.root_page = INVALID_VAL;
 	} else {
 		// Load saved table version
 		uint32_t file_table_ver;
@@ -123,7 +126,7 @@ int table_save(db_table *table) {
 	return 0;
 }
 
-void *table_get_norm_page(db_table *table, uint32_t page_num) {
+void *table_get_norm_page(db_table *table, page_t page_num) {
 	if (page_num >= table->cmeta.ext_start) {
 		fprintf(stderr, "tried to access page outside of database\n");
 		exit(EXIT_FAILURE);
@@ -132,7 +135,7 @@ void *table_get_norm_page(db_table *table, uint32_t page_num) {
 	// Check cache
 	for (uint32_t i = 0; i < table->norm_cache->page_count; i++) {
 		db_page *page = table->norm_cache->data + i;
-		if (page_num == page->page_num) {
+		if (page_num == page->pg_num) {
 			return page->raw_data;
 		}
 	}
@@ -148,7 +151,7 @@ void *table_get_norm_page(db_table *table, uint32_t page_num) {
 	return loaded_page->raw_data;
 }
 
-void *table_get_ext_page(db_table *table, uint32_t page_num) {
+void *table_get_ext_page(db_table *table, page_t page_num) {
 	if (page_num >= table->cmeta.total_pages) {
 		fprintf(stderr, "tried to access page outside of database\n");
 		exit(EXIT_FAILURE);
@@ -157,7 +160,7 @@ void *table_get_ext_page(db_table *table, uint32_t page_num) {
 	// Check cache
 	for (uint32_t i = 0; i < table->ext_cache->page_count; i++) {
 		db_page *page = table->ext_cache->data + i;
-		if (page_num == page->page_num) {
+		if (page_num == page->pg_num) {
 			return page->raw_data;
 		}
 	}
@@ -173,10 +176,10 @@ void *table_get_ext_page(db_table *table, uint32_t page_num) {
 	return loaded_page->raw_data;
 }
 
-void *table_new_norm_page(db_table *table, uint32_t *index) {
+void *table_new_norm_page(db_table *table, page_t *index) {
 	// Create page in cache
 	db_page new_page = {
-		.page_num = table->cmeta.ext_start,
+		.pg_num = table->cmeta.ext_start,
 		.raw_data = malloc(PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->norm_cache, &new_page);
@@ -190,15 +193,15 @@ void *table_new_norm_page(db_table *table, uint32_t *index) {
 	table->cmeta.total_pages++;
 	
 	if (index != NULL) {
-		*index = inserted->page_num;
+		*index = inserted->pg_num;
 	}
 	return inserted->raw_data;
 }
 
-void *table_new_ext_page(db_table *table, uint32_t *index) {
+void *table_new_ext_page(db_table *table, page_t *index) {
 	// Create page in cache
 	db_page new_page = {
-		.page_num = table->cmeta.total_pages,
+		.pg_num = table->cmeta.total_pages,
 		.raw_data = malloc(PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->ext_cache, &new_page);
@@ -211,7 +214,7 @@ void *table_new_ext_page(db_table *table, uint32_t *index) {
 	table->cmeta.total_pages++;
 	
 	if (index != NULL) {
-		*index = inserted->page_num;
+		*index = inserted->pg_num;
 	}
 	return inserted->raw_data;
 }
@@ -229,7 +232,7 @@ void *table_new_ext_page(db_table *table, uint32_t *index) {
 int flush_cache(db_cache *cache, int fd, uint32_t offset) {
 	for (uint32_t i = 0; i < cache->page_count; i++) {
 		db_page *page = cache->data + i;
-		lseek(fd, locate_page(page->page_num + offset), SEEK_SET);
+		lseek(fd, locate_page(page->pg_num + offset), SEEK_SET);
 		if (write(fd, page->raw_data, PAGE_SIZE) != PAGE_SIZE) {
 			fprintf(stderr, "failed to flush page\n");
 			return -1;
@@ -251,7 +254,7 @@ int flush_cache(db_cache *cache, int fd, uint32_t offset) {
  * @param[in] page_num - Page number.
  * @return Pointer to db_page object in cache with requested page.
  */
-db_page *load_to_cache(db_cache *cache, int fd, uint32_t page_num) {
+db_page *load_to_cache(db_cache *cache, int fd, page_t page_num) {
 	void *page_buffer = malloc(PAGE_SIZE);
 
 	// Read page
@@ -262,7 +265,7 @@ db_page *load_to_cache(db_cache *cache, int fd, uint32_t page_num) {
 	}
 
 	db_page page = {
-		.page_num = page_num,
+		.pg_num = page_num,
 		.raw_data = page_buffer
 	};
 

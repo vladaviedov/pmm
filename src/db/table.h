@@ -2,11 +2,11 @@
 
 #include <stdint.h>
 
-#define PAGE_SIZE 4096
+#include "defines.h"
 
 // Page pointer
 typedef struct {
-	uint32_t page_num;
+	page_t pg_num;
 	void *raw_data;
 } db_page;
 
@@ -22,6 +22,7 @@ typedef struct {
 	uint32_t table_version;
 	uint32_t total_pages;
 	uint32_t ext_start;
+	page_t root_page;
 } db_meta;
 
 // Database table
@@ -60,7 +61,7 @@ int table_save(db_table *table);
  * @param[in] page_num - Page number to retrieve.
  * @return Database page (size = PAGE_SIZE).
  */
-void *table_get_norm_page(db_table *table, uint32_t page_num);
+void *table_get_norm_page(db_table *table, page_t page_num);
 
 /**
  * @brief Load a extension page from database.
@@ -69,7 +70,7 @@ void *table_get_norm_page(db_table *table, uint32_t page_num);
  * @param[in] page_num - Page number to retrieve.
  * @return Database page (size = PAGE_SIZE).
  */
-void *table_get_ext_page(db_table *table, uint32_t page_num);
+void *table_get_ext_page(db_table *table, page_t page_num);
 
 /**
  * @brief Create a new normal database page.
@@ -78,7 +79,7 @@ void *table_get_ext_page(db_table *table, uint32_t page_num);
  * @param[out] index - New page index (if not NULL).
  * @return Database page (size = PAGE_SIZE).
  */
-void *table_new_norm_page(db_table *table, uint32_t *index);
+void *table_new_norm_page(db_table *table, page_t *index);
 
 /**
  * @brief Create a new extension database page.
@@ -87,4 +88,4 @@ void *table_new_norm_page(db_table *table, uint32_t *index);
  * @param[out] index - New page index (if not NULL).
  * @return Database page (size = PAGE_SIZE).
  */
-void *table_new_ext_page(db_table *table, uint32_t *index);
+void *table_new_ext_page(db_table *table, page_t *index);
