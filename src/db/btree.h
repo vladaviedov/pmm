@@ -34,7 +34,7 @@ typedef struct {
 // Inner node, sizeof = PAGE_SIZE
 typedef struct {
 	btree_header header;
-	page_t right_child;
+	page_t pg_right_child;
 	// Excluding right child
 	uint32_t child_count;
 	btree_inner_child children[INNER_KEYS];
@@ -48,7 +48,7 @@ typedef struct {
 // Leaf node, sizeof = PAGE_SIZE
 typedef struct {
 	btree_header header;
-	page_t next_leaf;
+	page_t pg_next_leaf;
 	uint32_t cell_count;
 	uint32_t record_length;
 	uint8_t records[LEAF_DATA_MEM];
