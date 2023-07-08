@@ -80,3 +80,19 @@ void btree_init(db_table *table, uint32_t record_length);
  * @return Status code.
  */
 int btree_insert(db_table *table, md5_t *key, void *record);
+
+/**
+ * @brief Create new table iterator cursor.
+ *
+ * @param[in] table - Table from which to read.
+ * @return Returns cursor to first element, should be walked with btree_next
+ */
+btree_cursor *btree_iter(db_table *table);
+
+/**
+ * @brief Returns next record of a table.
+ *
+ * @param[in/out] iter - Table iterator obtained from btree_iter.
+ * @return Pointer to record.
+ */
+void *btree_next(btree_cursor *iter);

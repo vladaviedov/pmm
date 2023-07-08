@@ -53,7 +53,38 @@ int btree_insert(db_table *table, md5_t *key, void *record) {
 	memcpy(leaf_cell_body_at(target, location->cell_num), record, target->record_length);
 
 	target->cell_count++;
+	free(location);
 	return 0;
+}
+
+btree_cursor *btree_iter(db_table *table) {
+	md5_t zero_key;
+	md5_zero(&zero_key);
+
+	return find_key(table, &zero_key);
+}
+
+void *btree_next(btree_cursor *iter) {
+	if (iter->end) {
+		return NULL;
+	}
+
+	// Retrieve record
+	btree_leaf *page = table_get_norm_page(iter->table, iter->pg_value);
+	void* record = leaf_cell_at(page, iter->cell_num);
+
+	// Update iterator
+	iter->cell_num++;
+	if (iter->cell_num == page->cell_count) {
+		if (page->pg_next_leaf == INVALID_VAL) {
+			iter->end = 1;
+		} else {
+			iter->pg_value = page->pg_next_leaf;
+			iter->cell_num = 0;
+		}
+	}
+
+	return record;
 }
 
 /** Private functions */
@@ -255,8 +286,10 @@ int leaf_split_insert(btree_leaf *old_node, md5_t *key, void *record, btree_curs
 		new_root->children[0].pg_child = old_node->header.pg_self;
 		new_root->pg_right_child = new_node->header.pg_self;
 	} else {
-		page_buf = old_node->header.pg_parent;
-		btree_inner *parent = table_get_norm_page(location->table, page_buf);
+		return -1;
+		// TODO: implement
+		/* page_buf = old_node->header.pg_parent; */
+		/* btree_inner *parent = table_get_norm_page(location->table, page_buf); */
 		// TODO: update old node
 		// TODO: internal insert
 	}
