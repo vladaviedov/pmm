@@ -22,6 +22,7 @@ typedef struct {
 	uint32_t table_version;
 	uint32_t total_pages;
 	uint32_t ext_start;
+	uint64_t ext_end_ptr;
 	page_t root_page;
 } db_meta;
 

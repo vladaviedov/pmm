@@ -40,6 +40,7 @@ db_table *table_open(const char *file, uint32_t table_ver) {
 		t->fmeta.total_pages = 0;
 		t->fmeta.ext_start = 0;
 		t->fmeta.root_page = INVALID_VAL;
+		t->fmeta.ext_end_ptr = 0;
 	} else {
 		// Load saved table version
 		uint32_t file_table_ver;

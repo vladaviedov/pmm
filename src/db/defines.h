@@ -23,8 +23,11 @@ typedef uint128_t md5_t;
 typedef uint8_t md5_t[16];
 #endif // uint128_t
 
-// External page pointer
-typedef uint64_t ext_t;
+// External page pointer/locator
+typedef struct {
+	uint64_t ptr;
+	uint64_t len;
+} ext_t;
 
 // MD5 Comparison Macros
 #ifdef uint128_t
