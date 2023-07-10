@@ -11,3 +11,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE SRC src/*.c)
 add_executable(pmm ${SRC})
+target_link_libraries(pmm -lcrypto -lalpm)
