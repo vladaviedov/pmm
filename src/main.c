@@ -5,6 +5,9 @@
 
 #include "common.h"
 #include "commands.h"
+#include "client/client.h"
+
+#define CLIENT "pacman"
 
 typedef struct {
 	const char *name;
@@ -33,6 +36,8 @@ int main(int argc, char **argv) {
 		printf("see usage with 'pmm --help'\n");
 		return EXIT_FAILURE;
 	}
+
+	client_set(CLIENT);
 
 	char *subcommand = argv[1];
 	for (uint32_t i = 0; i < sizeof(table) / sizeof(command); i++) {

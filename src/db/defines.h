@@ -36,6 +36,7 @@ typedef struct {
 #define md5_gr(val, ref) (val > ref)
 #define md5_cp(dest, src) *dest = *src
 #define md5_zero(ptr) *ptr = 0
+#define md5_req_ptr(val) &val
 #else
 #include <string.h>
 #define md5_eq(val, ref) (memcmp(val, ref, 16) == 0)
@@ -43,4 +44,5 @@ typedef struct {
 #define md5_gr(val, ref) (memcmp(val, ref, 16) > 0)
 #define md5_cp(dest, src) memcpy(dest, src, 16)
 #define md5_zero(ptr) memset(ptr, 0, 16)
+#define md5_req_ptr(val) val
 #endif // uint128_t
