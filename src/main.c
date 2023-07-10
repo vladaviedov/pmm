@@ -27,7 +27,9 @@ static const command table[] = {
 	{ "add", &add },
 	// Remove
 	{ "remove", &rm },
-	{ "rm", &rm }
+	{ "rm", &rm },
+	// List
+	{ "list", &list }
 };
 
 int main(int argc, char **argv) {

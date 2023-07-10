@@ -97,7 +97,7 @@ int table_save(db_table *table) {
 
 	// Move ext pages if spaces needed
 	uint32_t norm_delta = norm_count(table->cmeta) - norm_count(table->fmeta);
-	if (norm_delta > 0) {
+	if (norm_delta > 0 && table->fmeta.total_pages > 0) {
 		uint8_t buf[PAGE_SIZE];
 		for (uint32_t i = table->fmeta.total_pages - 1; i >= table->fmeta.ext_start; i--) {
 			lseek(table->fd, locate_page(i), SEEK_SET);
@@ -184,7 +184,7 @@ void *table_new_norm_page(db_table *table, page_t *index) {
 		.raw_data = malloc(PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->norm_cache, &new_page);
-	if (inserted != NULL) {
+	if (inserted == NULL) {
 		fprintf(stderr, "failed to create new page in cache\n");
 		exit(EXIT_FAILURE);
 	}
@@ -206,7 +206,7 @@ void *table_new_ext_page(db_table *table, page_t *index) {
 		.raw_data = malloc(PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->ext_cache, &new_page);
-	if (inserted != NULL) {
+	if (inserted == NULL) {
 		fprintf(stderr, "failed to create new page in cache\n");
 		exit(EXIT_FAILURE);
 	}
@@ -294,6 +294,7 @@ db_page *cache_insert(db_cache *cache, db_page *data) {
 	// Add to cache
 	db_page *page = cache->data + cache->page_count;
 	memcpy(page, data, sizeof(db_page));
+	cache->page_count++;
 
 	return page;
 }

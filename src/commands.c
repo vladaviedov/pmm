@@ -1,8 +1,10 @@
 #include "commands.h"
-#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "common.h"
+#include "db/pkg.h"
 
 int usage(unused int argc, unused char **argv) {
 	printf("usage: pmm [command] <args>\n");
@@ -31,7 +33,11 @@ int add(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	return EXIT_SUCCESS;
+	pkg_open();
+	int result = pkg_add(argv[0]);
+	pkg_save();
+
+	return (result == -1) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 int rm(int argc, char **argv) {
@@ -40,6 +46,19 @@ int rm(int argc, char **argv) {
 		printf("see usage with 'pmm remove --help'\n");
 		return EXIT_FAILURE;
 	}
+
+	return EXIT_SUCCESS;
+}
+
+int list(int argc, char **argv) {
+	if (argc != 0) {
+		printf("list: not implemented\n");
+		printf("provide no arguments\n");
+	}
+
+	pkg_open();
+	pkg_print_all();
+	pkg_save();
 
 	return EXIT_SUCCESS;
 }

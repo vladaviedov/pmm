@@ -1,5 +1,6 @@
 #include "pkg.h"
 
+#include <bits/stdint-uintn.h>
 #include <stdio.h>
 #include <openssl/md5.h>
 
@@ -73,6 +74,9 @@ int pkg_print_all(void) {
 	}
 
 	btree_cursor *iter = btree_iter(table);
+	uint32_t missing = 0;
+	uint32_t old = 0;
+	uint32_t ok = 0;
 	while (iter->end == 0) {
 		db_pkg *pkg = btree_next(iter);
 
@@ -80,12 +84,15 @@ int pkg_print_all(void) {
 		switch (pkg->status) {
 			case PKG_MISSING:
 				printf_color(RED);
+				missing++;
 				break;
 			case PKG_OLD:
 				printf_color(YELLOW);
+				old++;
 				break;
 			case PKG_OK:
 				printf_color(GREEN);
+				ok++;
 				break;
 		}
 
@@ -105,6 +112,11 @@ int pkg_print_all(void) {
 
 		putchar('\n');
 	}
+
+	uint32_t installed = old + ok;
+	uint32_t total = installed + missing;
+	printf_color(WHITE);
+	printf("Installed: %u / %u | Up to date: %u / %u\n", installed, total, ok, installed);
 
 	return 0;
 }

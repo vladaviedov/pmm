@@ -5,7 +5,8 @@
 typedef enum {
 	RED,
 	YELLOW,
-	GREEN
+	GREEN,
+	WHITE
 } color_t;
 
 /**
