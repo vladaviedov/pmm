@@ -8,7 +8,7 @@
 #include "table.h"
 
 #define leaf_max_cells(leaf_ptr) (LEAF_DATA_MEM / leaf_ptr->record_length)
-#define leaf_cell_at(leaf_ptr, i) (leaf_ptr->records + leaf_ptr->record_length * i)
+#define leaf_cell_at(leaf_ptr, i) (leaf_ptr->records + leaf_ptr->record_length * (i))
 #define leaf_cell_body_at(leaf_ptr, i) (leaf_cell_at(leaf_ptr, i) + sizeof(md5_t))
 
 void leaf_init(btree_leaf *node, page_t page, uint32_t record_length);
@@ -25,7 +25,7 @@ void btree_init(db_table *table, uint32_t record_length) {
 	btree_leaf *root = table->cmeta.total_pages == 0 ?
 		table_new_norm_page(table, NULL) :
 		table_get_norm_page(table, 0);
-	leaf_init(root, 0, record_length);
+	leaf_init(root, 0, record_length + sizeof(md5_t));
 	table->cmeta.root_page = 0;
 }
 
@@ -71,7 +71,7 @@ void *btree_next(btree_cursor *iter) {
 
 	// Retrieve record
 	btree_leaf *page = table_get_norm_page(iter->table, iter->pg_value);
-	void* record = leaf_cell_at(page, iter->cell_num);
+	void* record = leaf_cell_body_at(page, iter->cell_num);
 
 	// Update iterator
 	iter->cell_num++;

@@ -16,7 +16,7 @@
 // Get extension page count
 #define ext_count(meta) (meta.total_pages - meta.ext_start)
 // Get location of page in file
-#define locate_page(page) (sizeof(db_meta) + page * PAGE_SIZE)
+#define locate_page(page) (sizeof(db_meta) + (page) * PAGE_SIZE)
 
 int flush_cache(db_cache *cache, int fd, uint32_t offset);
 db_page *load_to_cache(db_cache *cache, int fd, page_t page_num);
@@ -168,7 +168,9 @@ void *table_get_ext_page(db_table *table, page_t page_num) {
 
 	// Cache miss
 	uint32_t page_in_file = table->fmeta.ext_start + page_num;
-	db_page *loaded_page = load_to_cache(table->norm_cache, table->fd, page_in_file);
+	db_page *loaded_page = load_to_cache(table->ext_cache, table->fd, page_in_file);
+	loaded_page->pg_num = page_num;
+
 	if (loaded_page == NULL) {
 		fprintf(stderr, "failed to load page from cache\n");
 		exit(EXIT_FAILURE);
@@ -181,7 +183,7 @@ void *table_new_norm_page(db_table *table, page_t *index) {
 	// Create page in cache
 	db_page new_page = {
 		.pg_num = table->cmeta.ext_start,
-		.raw_data = malloc(PAGE_SIZE)
+		.raw_data = calloc(1, PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->norm_cache, &new_page);
 	if (inserted == NULL) {
@@ -202,8 +204,8 @@ void *table_new_norm_page(db_table *table, page_t *index) {
 void *table_new_ext_page(db_table *table, page_t *index) {
 	// Create page in cache
 	db_page new_page = {
-		.pg_num = table->cmeta.total_pages,
-		.raw_data = malloc(PAGE_SIZE)
+		.pg_num = table->cmeta.total_pages - table->cmeta.ext_start,
+		.raw_data = calloc(1, PAGE_SIZE)
 	};
 	db_page *inserted = cache_insert(table->ext_cache, &new_page);
 	if (inserted == NULL) {
@@ -233,7 +235,9 @@ void *table_new_ext_page(db_table *table, page_t *index) {
 int flush_cache(db_cache *cache, int fd, uint32_t offset) {
 	for (uint32_t i = 0; i < cache->page_count; i++) {
 		db_page *page = cache->data + i;
-		lseek(fd, locate_page(page->pg_num + offset), SEEK_SET);
+		uint64_t place = locate_page(page->pg_num + offset);
+		lseek(fd, place, SEEK_SET);
+		/* lseek(fd, locate_page(page->pg_num + offset), SEEK_SET); */
 		if (write(fd, page->raw_data, PAGE_SIZE) != PAGE_SIZE) {
 			fprintf(stderr, "failed to flush page\n");
 			return -1;
@@ -241,8 +245,9 @@ int flush_cache(db_cache *cache, int fd, uint32_t offset) {
 
 		// Free cache object
 		free(page->raw_data);
-		free(page);
 	}
+
+	free(cache->data);
 
 	return 0;
 }

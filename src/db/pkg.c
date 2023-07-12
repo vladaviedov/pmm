@@ -1,7 +1,8 @@
 #include "pkg.h"
 
-#include <bits/stdint-uintn.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <openssl/md5.h>
 
 #include "defines.h"
@@ -77,7 +78,7 @@ int pkg_print_all(void) {
 	uint32_t missing = 0;
 	uint32_t old = 0;
 	uint32_t ok = 0;
-	while (iter->end == 0) {
+	while (!iter->end) {
 		db_pkg *pkg = btree_next(iter);
 
 		// Set color
@@ -118,5 +119,6 @@ int pkg_print_all(void) {
 	printf_color(WHITE);
 	printf("Installed: %u / %u | Up to date: %u / %u\n", installed, total, ok, installed);
 
+	free(iter);
 	return 0;
 }

@@ -5,8 +5,8 @@
 #include "defines.h"
 #include "table.h"
 
-#define ext_page(ptr) (ptr / PAGE_SIZE)
-#define ext_part(ptr) (ptr % PAGE_SIZE)
+#define ext_page(ptr) ((ptr) / PAGE_SIZE)
+#define ext_part(ptr) ((ptr) % PAGE_SIZE)
 #define ext_space(ptr) (PAGE_SIZE - ext_part(ptr))
 
 ext_t ext_insert(db_table *table, void *data, uint64_t len) {
