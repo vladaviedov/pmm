@@ -11,9 +11,12 @@
 #include "ext.h"
 
 #include "../util/color.h"
+#include "../util/vector.h"
 #include "../client/client.h"
 
 static db_table *table = NULL;
+
+db_pkg_status update_status(const client *cl, char *pkg);
 
 int pkg_open(void) {
 	if (table != NULL) {
@@ -62,9 +65,7 @@ int pkg_add(char *name) {
 	db_pkg pkg = {
 		.name = ext_insert(table, name, strlen(name)),
 		.group = { .ptr = INVALID_EXT, .len = 0 },
-		.status = (!cl->installed(name))
-			? PKG_MISSING
-			: (cl->outdated(name) ? PKG_OLD : PKG_OK)
+		.status = update_status(cl, name)
 	};
 
 	return btree_insert(table, &hash, &pkg);
@@ -135,8 +136,51 @@ int pkg_sync(void) {
 		}
 	}
 
+	const client *cl = client_get();
 	btree_cursor *iter = btree_iter(table);
+
+	vector *installs = vec_new(sizeof(char *));
+	vector *updates = vec_new(sizeof(db_pkg *));
+
 	while (!iter->end) {
 		db_pkg *pkg = btree_next(iter);
+
+		// Get name
+		char *name = malloc(pkg->name.len + 1);
+		ext_access(table, &pkg->name, name);
+		name[pkg->name.len] = '\0';
+
+		// Update status
+		pkg->status = update_status(cl, name);
+
+		if (pkg->status == PKG_MISSING) {
+			vec_push(installs, &name);
+			vec_push(updates, &pkg);
+		}
 	}
+
+	// Do install
+	int res = cl->install(installs->raw_array, installs->count);
+	if (res == 0) {
+		for (uint32_t i = 0; i < updates->count; i++) {
+			db_pkg *pkg = *(db_pkg **)vec_at(updates, i);
+			pkg->status = PKG_OK;
+		}
+	}
+
+	for (uint32_t i = 0; i < installs->count; i++) {
+		free(*(char **)vec_at(installs, i));
+	}
+
+	vec_free(installs);
+	vec_free(updates);
+	return 0;
+}
+
+/** Private functions */
+
+db_pkg_status update_status(const client *cl, char *pkg) {
+	return (!cl->installed(pkg)) ? PKG_MISSING
+		: (cl->outdated(pkg)) ? PKG_OLD
+		: PKG_OK;
 }

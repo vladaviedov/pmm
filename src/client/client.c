@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "alpm.h"
+#include "pacman.h"
 
 #define PACMAN "pacman"
 #define YAY "yay"
@@ -13,7 +14,8 @@ static const client *selected;
 static const client pacman = {
 	.exists = &pmm_alpm_exists,
 	.installed = &pmm_alpm_installed,
-	.outdated = &pmm_alpm_outdated
+	.outdated = &pmm_alpm_outdated,
+	.install = &pacman_install
 };
 
 static const client yay = {

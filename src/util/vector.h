@@ -23,8 +23,9 @@ vector *vec_new(uint32_t type_size);
  *
  * @param[in] vec - Vector object.
  * @param[in] val - Value to add. Expected to be same size as type_size.
+ * @returns Pointer to inserted object.
  */
-void vec_push(vector *vec, void *val);
+void *vec_push(vector *vec, void *val);
 
 /**
  * @brief Get element at position.

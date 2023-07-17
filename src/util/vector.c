@@ -15,7 +15,7 @@ vector *vec_new(uint32_t type_size) {
 	return vec;
 }
 
-void vec_push(vector *vec, void *val) {
+void *vec_push(vector *vec, void *val) {
 	if (vec->raw_array == NULL) {
 		vec->_alloc_count = 2;
 		vec->raw_array = malloc(vec->_type_size * vec->_alloc_count);
@@ -26,16 +26,14 @@ void vec_push(vector *vec, void *val) {
 		vec->raw_array = realloc(vec->raw_array, vec->_type_size * vec->_alloc_count);
 	}
 
-	memcpy(vec->raw_array + vec->count, val, vec->_type_size);
+	void *dest = vec_at(vec, vec->count);
+	memcpy(dest, val, vec->_type_size);
 	vec->count++;
+	return dest;
 }
 
 void *vec_at(vector *vec, uint32_t index) {
-	if (index >= vec->count) {
-		return NULL;
-	}
-
-	return vec->_type_size * index + vec->raw_array;
+	return vec->raw_array + vec->_type_size * index;
 }
 
 void vec_free(vector *vec) {
