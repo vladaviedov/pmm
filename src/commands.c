@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
+#include "util/attr.h"
 #include "db/pkg.h"
 
 int usage(unused int argc, unused char **argv) {
@@ -33,7 +33,6 @@ int add(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	pkg_open();
 	int result = pkg_add(argv[0]);
 	pkg_save();
 
@@ -54,10 +53,23 @@ int list(int argc, char **argv) {
 	if (argc != 0) {
 		printf("list: not implemented\n");
 		printf("provide no arguments\n");
+		return EXIT_FAILURE;
 	}
 
-	pkg_open();
 	pkg_print_all();
+	pkg_save();
+
+	return EXIT_SUCCESS;
+}
+
+int sync(int argc, char **argv) {
+	if (argc != 0) {
+		printf("sync: not implemented\n");
+		printf("provide no arguments\n");
+		return EXIT_FAILURE;
+	}
+
+	pkg_sync();
 	pkg_save();
 
 	return EXIT_SUCCESS;

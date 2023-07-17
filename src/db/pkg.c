@@ -10,7 +10,7 @@
 #include "btree.h"
 #include "ext.h"
 
-#include "../common.h"
+#include "../util/color.h"
 #include "../client/client.h"
 
 static db_table *table = NULL;
@@ -31,7 +31,7 @@ int pkg_open(void) {
 
 int pkg_save(void) {
 	if (table == NULL) {
-		fprintf(stderr, "table is not open\n");
+		printf("table was not open");
 		return -1;
 	}
 
@@ -40,8 +40,10 @@ int pkg_save(void) {
 
 int pkg_add(char *name) {
 	if (table == NULL) {
-		fprintf(stderr, "table is not open\n");
-		return -1;
+		if (pkg_open() < 0) {
+			fprintf(stderr, "cannot open table\n");
+			return -1;
+		}
 	}
 	
 	// Check if client exists
@@ -70,8 +72,10 @@ int pkg_add(char *name) {
 
 int pkg_print_all(void) {
 	if (table == NULL) {
-		fprintf(stderr, "table is not open\n");
-		return -1;
+		if (pkg_open() < 0) {
+			fprintf(stderr, "cannot open table\n");
+			return -1;
+		}
 	}
 
 	btree_cursor *iter = btree_iter(table);
@@ -121,4 +125,18 @@ int pkg_print_all(void) {
 
 	free(iter);
 	return 0;
+}
+
+int pkg_sync(void) {
+	if (table == NULL) {
+		if (pkg_open() < 0) {
+			fprintf(stderr, "cannot open table\n");
+			return -1;
+		}
+	}
+
+	btree_cursor *iter = btree_iter(table);
+	while (!iter->end) {
+		db_pkg *pkg = btree_next(iter);
+	}
 }

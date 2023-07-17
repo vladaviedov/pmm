@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "common.h"
 #include "commands.h"
 #include "client/client.h"
 
@@ -29,7 +28,9 @@ static const command table[] = {
 	{ "remove", &rm },
 	{ "rm", &rm },
 	// List
-	{ "list", &list }
+	{ "list", &list },
+	// Sync
+	{ "sync", &sync }
 };
 
 int main(int argc, char **argv) {
