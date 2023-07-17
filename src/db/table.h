@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "defines.h"
+#include "../util/vector.h"
 
 // Page pointer
 typedef struct {
@@ -34,8 +35,8 @@ typedef struct {
 	db_meta fmeta;
 	// Cache
 	db_meta cmeta;
-	db_cache *norm_cache;
-	db_cache *ext_cache;
+	vector *norm_cache;
+	vector *ext_cache;
 } db_table;
 
 /**

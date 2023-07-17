@@ -8,8 +8,7 @@
 #include <unistd.h>
 
 #include "defines.h"
-
-#define CACHE_GROW 5
+#include "../util/vector.h"
 
 // Get normal page count
 #define norm_count(meta) meta.ext_start
@@ -18,9 +17,8 @@
 // Get location of page in file
 #define locate_page(page) (sizeof(db_meta) + (page) * PAGE_SIZE)
 
-int flush_cache(db_cache *cache, int fd, uint32_t offset);
-db_page *load_to_cache(db_cache *cache, int fd, page_t page_num);
-db_page *cache_insert(db_cache *cache, db_page *data);
+int flush_cache(vector *cache, int fd, uint32_t offset);
+db_page *load_to_cache(vector *cache, int fd, page_t page_num);
 
 db_table *table_open(const char *file, uint32_t table_ver) {
 	db_table *t = malloc(sizeof(db_table));
@@ -71,14 +69,8 @@ db_table *table_open(const char *file, uint32_t table_ver) {
 	t->cmeta = t->fmeta;
 
 	// Allocate cache objects
-	t->norm_cache = malloc(sizeof(db_cache));
-	t->norm_cache->page_count = 0;
-	t->norm_cache->alloc_count = 0;
-	t->norm_cache->data = NULL;
-	t->ext_cache = malloc(sizeof(db_cache));
-	t->ext_cache->page_count = 0;
-	t->ext_cache->alloc_count = 0;
-	t->ext_cache->data = NULL;
+	t->norm_cache = vec_new(sizeof(db_page));
+	t->ext_cache = vec_new(sizeof(db_page));
 
 	return t;
 }
@@ -119,9 +111,9 @@ int table_save(db_table *table) {
 	flush_cache(table->ext_cache, table->fd, table->cmeta.ext_start);
 
 	// Cleanup
+	vec_free(table->norm_cache);
+	vec_free(table->ext_cache);
 	close(table->fd);
-	free(table->norm_cache);
-	free(table->ext_cache);
 	free(table);
 
 	return 0;
@@ -134,8 +126,8 @@ void *table_get_norm_page(db_table *table, page_t page_num) {
 	}
 
 	// Check cache
-	for (uint32_t i = 0; i < table->norm_cache->page_count; i++) {
-		db_page *page = table->norm_cache->data + i;
+	for (uint32_t i = 0; i < table->norm_cache->count; i++) {
+		db_page *page = vec_at(table->norm_cache, i);
 		if (page_num == page->pg_num) {
 			return page->raw_data;
 		}
@@ -159,8 +151,8 @@ void *table_get_ext_page(db_table *table, page_t page_num) {
 	}
 
 	// Check cache
-	for (uint32_t i = 0; i < table->ext_cache->page_count; i++) {
-		db_page *page = table->ext_cache->data + i;
+	for (uint32_t i = 0; i < table->ext_cache->count; i++) {
+		db_page *page = vec_at(table->ext_cache, i);
 		if (page_num == page->pg_num) {
 			return page->raw_data;
 		}
@@ -185,20 +177,16 @@ void *table_new_norm_page(db_table *table, page_t *index) {
 		.pg_num = table->cmeta.ext_start,
 		.raw_data = calloc(1, PAGE_SIZE)
 	};
-	db_page *inserted = cache_insert(table->norm_cache, &new_page);
-	if (inserted == NULL) {
-		fprintf(stderr, "failed to create new page in cache\n");
-		exit(EXIT_FAILURE);
-	}
+	vec_push(table->norm_cache, &new_page);
 
 	// Update cmeta
 	table->cmeta.ext_start++;
 	table->cmeta.total_pages++;
 	
 	if (index != NULL) {
-		*index = inserted->pg_num;
+		*index = new_page.pg_num;
 	}
-	return inserted->raw_data;
+	return new_page.raw_data;
 }
 
 void *table_new_ext_page(db_table *table, page_t *index) {
@@ -207,7 +195,7 @@ void *table_new_ext_page(db_table *table, page_t *index) {
 		.pg_num = table->cmeta.total_pages - table->cmeta.ext_start,
 		.raw_data = calloc(1, PAGE_SIZE)
 	};
-	db_page *inserted = cache_insert(table->ext_cache, &new_page);
+	db_page *inserted = vec_push(table->ext_cache, &new_page);
 	if (inserted == NULL) {
 		fprintf(stderr, "failed to create new page in cache\n");
 		exit(EXIT_FAILURE);
@@ -232,9 +220,9 @@ void *table_new_ext_page(db_table *table, page_t *index) {
  * @param[in] offset - Write page offset.
  * @return Success code.
  */
-int flush_cache(db_cache *cache, int fd, uint32_t offset) {
-	for (uint32_t i = 0; i < cache->page_count; i++) {
-		db_page *page = cache->data + i;
+int flush_cache(vector *cache, int fd, uint32_t offset) {
+	for (uint32_t i = 0; i < cache->count; i++) {
+		db_page *page = vec_at(cache, i);
 		uint64_t place = locate_page(page->pg_num + offset);
 		lseek(fd, place, SEEK_SET);
 		/* lseek(fd, locate_page(page->pg_num + offset), SEEK_SET); */
@@ -247,8 +235,6 @@ int flush_cache(db_cache *cache, int fd, uint32_t offset) {
 		free(page->raw_data);
 	}
 
-	free(cache->data);
-
 	return 0;
 }
 
@@ -260,7 +246,7 @@ int flush_cache(db_cache *cache, int fd, uint32_t offset) {
  * @param[in] page_num - Page number.
  * @return Pointer to db_page object in cache with requested page.
  */
-db_page *load_to_cache(db_cache *cache, int fd, page_t page_num) {
+db_page *load_to_cache(vector *cache, int fd, page_t page_num) {
 	void *page_buffer = malloc(PAGE_SIZE);
 
 	// Read page
@@ -275,31 +261,5 @@ db_page *load_to_cache(db_cache *cache, int fd, page_t page_num) {
 		.raw_data = page_buffer
 	};
 
-	return cache_insert(cache, &page);
-}
-
-/**
- * @brief Insert page into cache.
- *
- * @param[in] cache - Selected cache.
- * @param[in] data - Page data.
- * @return Pointer to the inserted page in cache.
- */
-db_page *cache_insert(db_cache *cache, db_page *data) {
-	// Expand cache if needed
-	if (cache->page_count == cache->alloc_count) {
-		cache->alloc_count += CACHE_GROW;
-		cache->data = realloc(cache->data, cache->alloc_count * sizeof(db_page));
-		if (cache->data == NULL) {
-			fprintf(stderr, "memory allocation failed\n");
-			return NULL;
-		}
-	}
-
-	// Add to cache
-	db_page *page = cache->data + cache->page_count;
-	memcpy(page, data, sizeof(db_page));
-	cache->page_count++;
-
-	return page;
+	return vec_push(cache, &page);
 }
