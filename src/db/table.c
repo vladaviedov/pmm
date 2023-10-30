@@ -20,7 +20,7 @@
 int flush_cache(vector *cache, int fd, uint32_t offset);
 db_page *load_to_cache(vector *cache, int fd, page_t page_num);
 
-db_table *table_open(const char *file, uint32_t table_ver) {
+db_table *table_open(const char *file, uint32_t identity) {
 	db_table *t = malloc(sizeof(db_table));
 
 	// Open database file
@@ -34,27 +34,25 @@ db_table *table_open(const char *file, uint32_t table_ver) {
 
 	if (t->fsize == 0) {
 		// Fresh file: create new metadata
-		t->fmeta.table_version = table_ver;
+		t->fmeta.table_identity = identity;
 		t->fmeta.total_pages = 0;
 		t->fmeta.ext_start = 0;
 		t->fmeta.root_page = INVALID_VAL;
 		t->fmeta.ext_end_ptr = 0;
 	} else {
-		// Load saved table version
-		uint32_t file_table_ver;
+		// Load saved table identity
+		uint32_t file_table_identity;
 		lseek(fd, 0, SEEK_SET);
-		int64_t bytes = read(fd, &file_table_ver, sizeof(uint32_t));
+		int64_t bytes = read(fd, &file_table_identity, sizeof(uint32_t));
 		if (bytes != sizeof(uint32_t)) {
 			fprintf(stderr, "failed to read table version from file\n");
 			return NULL;
 		}
 		
-		// Version check
-		if (table_ver < file_table_ver) {
-			fprintf(stderr, "stored database has old table: needs upgrade\n");
-			return NULL;
-		} else if (table_ver > file_table_ver) {
-			fprintf(stderr, "unrecognized table version number\n");
+		// Identity check
+		if (file_table_identity != identity) {
+			fprintf(stderr, "this table contains other data\n");
+			fprintf(stderr, "aborting open\n");
 			return NULL;
 		}
 

@@ -20,7 +20,7 @@ typedef struct {
 
 // Metadata information
 typedef struct {
-	uint32_t table_version;
+	uint32_t table_identity;
 	uint32_t total_pages;
 	uint32_t ext_start;
 	uint64_t ext_end_ptr;
@@ -43,10 +43,10 @@ typedef struct {
  * @brief Load database table.
  *
  * @param[in] file - Filename.
- * @param[in] table_ver - Current expected table version.
+ * @param[in] identity - Expected table identity (type stored).
  * @return New db_table object.
  */
-db_table *table_open(const char *file, uint32_t table_ver);
+db_table *table_open(const char *file, uint32_t identity);
 
 /**
  * @brief Save database to disk & close database object.

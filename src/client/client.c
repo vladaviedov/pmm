@@ -18,18 +18,9 @@ static const client pacman = {
 	.install = &pacman_install
 };
 
-static const client yay = {
-	/* .exists = NULL, */
-	.installed = &pmm_alpm_installed,
-	/* .outdated = NULL */
-};
-
-
 int client_set(const char *name) {
 	if (strcmp(name, PACMAN) == 0) {
 		selected = &pacman;
-	} else if (strcmp(name, YAY) == 0) {
-		selected = &yay;
 	} else {
 		fprintf(stderr, "unrecognized client: %s\n", name);
 		return -1;

@@ -9,11 +9,11 @@
 #define make_handle() alpm_initialize("/", "/var/lib/pacman", NULL)
 #define delete_handle(handle) alpm_release(handle)
 
-alpm_pkg_t *find_local(alpm_handle_t *handle, char *name);
-alpm_pkg_t *find_repos(alpm_handle_t *handle, char *name);
+alpm_pkg_t *find_local(alpm_handle_t *handle, const char *name);
+alpm_pkg_t *find_repos(alpm_handle_t *handle, const char *name);
 void setup_alpm(alpm_handle_t *handle);
 
-int pmm_alpm_exists(char *name) {
+int pmm_alpm_exists(const char *name) {
 	alpm_handle_t *handle = make_handle();
 	setup_alpm(handle);
 
@@ -40,7 +40,7 @@ int pmm_alpm_exists(char *name) {
 	return result;
 }
 
-int pmm_alpm_installed(char *name) {
+int pmm_alpm_installed(const char *name) {
 	alpm_handle_t *handle = make_handle();
 	setup_alpm(handle);
 
@@ -59,7 +59,7 @@ int pmm_alpm_installed(char *name) {
 	return result;
 }
 
-int pmm_alpm_outdated(char *name) {
+int pmm_alpm_outdated(const char *name) {
 	alpm_handle_t *handle = make_handle();
 	setup_alpm(handle);
 
@@ -83,7 +83,7 @@ int pmm_alpm_outdated(char *name) {
  * @param[in] name - Package name.
  * @return ALPM package or NULL if not found.
  */
-alpm_pkg_t *find_local(alpm_handle_t *handle, char *name) {
+alpm_pkg_t *find_local(alpm_handle_t *handle, const char *name) {
 	alpm_db_t *local_db = alpm_get_localdb(handle);
 	return alpm_db_get_pkg(local_db, name);
 }
@@ -95,7 +95,7 @@ alpm_pkg_t *find_local(alpm_handle_t *handle, char *name) {
  * @param[in] name - Package name.
  * @return ALPM package or NULL if not found.
  */
-alpm_pkg_t *find_repos(alpm_handle_t *handle, char *name) {
+alpm_pkg_t *find_repos(alpm_handle_t *handle, const char *name) {
 	alpm_list_t *syncs = alpm_get_syncdbs(handle);
 	for (alpm_list_t *i = syncs; i != NULL; i = alpm_list_next(i)) {
 		alpm_pkg_t *pkg_search = alpm_db_get_pkg(i->data, name);

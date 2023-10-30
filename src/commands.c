@@ -4,7 +4,9 @@
 #include <stdlib.h>
 
 #include "util/attr.h"
-#include "db/pkg.h"
+#include "tables/pkg.h"
+
+#define PKG_TABLE "pkg.pmm"
 
 int usage(unused int argc, unused char **argv) {
 	printf("usage: pmm [command] <args>\n");
@@ -33,10 +35,15 @@ int add(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	int result = pkg_add(argv[0]);
-	pkg_save();
+	pkg_table *pkgs = pkg_open(PKG_TABLE);
+	int result = pkg_add(pkgs, argv[0]);
+	if (result < 0) {
+		fprintf(stderr, "failed to add package\n");
+		return EXIT_FAILURE;
+	}
 
-	return (result == -1) ? EXIT_FAILURE : EXIT_SUCCESS;
+	pkg_save(pkgs);
+	return EXIT_SUCCESS;
 }
 
 int rm(int argc, char **argv) {
@@ -56,8 +63,10 @@ int list(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	pkg_print_all();
-	pkg_save();
+	pkg_table *pkgs = pkg_open(PKG_TABLE);
+	pkg_check(pkgs);
+	pkg_print_all(pkgs);
+	pkg_save(pkgs);
 
 	return EXIT_SUCCESS;
 }
@@ -69,8 +78,9 @@ int sync(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	pkg_sync();
-	pkg_save();
+	pkg_table *pkgs = pkg_open(PKG_TABLE);
+	pkg_sync(pkgs);
+	pkg_save(pkgs);
 
 	return EXIT_SUCCESS;
 }

@@ -4,12 +4,12 @@
 
 typedef struct {
 	// Queries
-	int (*exists)(char *name);
-	int (*installed)(char *name);
-	int (*outdated)(char *name);
+	int (*exists)(const char *name);
+	int (*installed)(const char *name);
+	int (*outdated)(const char *name);
 
 	// Actions
-	int (*install)(char **packages, uint32_t count);
+	int (*install)(const char **packages, uint32_t count);
 } client;
 
 int client_set(const char *name);

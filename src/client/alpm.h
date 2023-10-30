@@ -6,7 +6,7 @@
  * @param[in] name - Package name.
  * @return Boolean result.
  */
-int pmm_alpm_exists(char *name);
+int pmm_alpm_exists(const char *name);
 
 /**
  * @brief Check if package is currently installed.
@@ -14,7 +14,7 @@ int pmm_alpm_exists(char *name);
  * @param[in] name - Package name.
  * @return Boolean result.
  */
-int pmm_alpm_installed(char *name);
+int pmm_alpm_installed(const char *name);
 
 /**
  * @brief Check if the local package is out of date.
@@ -22,4 +22,4 @@ int pmm_alpm_installed(char *name);
  * @param[in] name - Package name.
  * @return Boolean result.
  */
-int pmm_alpm_outdated(char *name);
+int pmm_alpm_outdated(const char *name);

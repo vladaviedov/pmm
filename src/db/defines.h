@@ -11,10 +11,6 @@ typedef unsigned __int128 uint128_t;
 #define INVALID_VAL UINT32_MAX
 #define INVALID_EXT UINT64_MAX
 
-// Pkg table info
-#define PKG_TABLE "pkg.pmm"
-#define PKG_TABLE_VER 1
-
 // Btree Entry Types
 typedef uint32_t page_t;
 #ifdef uint128_t

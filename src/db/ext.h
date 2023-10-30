@@ -10,7 +10,7 @@
  * @param[in] data - Data to insert.
  * @return Ext page resource locator.
  */
-ext_t ext_insert(db_table *table, void *data, uint64_t len);
+ext_t ext_insert(db_table *table, const void *data, const uint64_t len);
 
 /**
  * @brief Access data pointed to by a locator.

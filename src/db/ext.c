@@ -9,7 +9,7 @@
 #define ext_part(ptr) ((ptr) % PAGE_SIZE)
 #define ext_space(ptr) (PAGE_SIZE - ext_part(ptr))
 
-ext_t ext_insert(db_table *table, void *data, uint64_t len) {
+ext_t ext_insert(db_table *table, const void *data, const uint64_t len) {
 	// Find new location
 	uint64_t end_ptr = table->cmeta.ext_end_ptr;
 	void *ext_page = (ext_space(end_ptr) < len || ext_part(end_ptr) == 0) ?
