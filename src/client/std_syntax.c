@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define ROOT_PROG "doas"
 #define SYNC "-S"
 #define EXPLICIT "--asexplicit"
 
@@ -17,11 +18,12 @@ int std_install(char *program, char **packages, uint32_t count) {
 
 	// Child
 	if (pid == 0) {
-		char *argv[count + 4];
+		char *argv[count + 5];
 
-		argv[0] = program;
-		argv[1] = SYNC;
-		argv[2] = EXPLICIT;
+		argv[0] = ROOT_PROG;
+		argv[1] = program;
+		argv[2] = SYNC;
+		argv[3] = EXPLICIT;
 
 		memcpy(argv + 3, packages, count * sizeof(char *));
 
